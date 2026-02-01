@@ -1,67 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#000000" /> 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Push Notification Test</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
+  <title>Push Test</title>
+
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#000000" />
 </head>
 
-<body style="font-family: sans-serif; text-align:center; padding-top:40px;">
+<body style="font-family:sans-serif;text-align:center;margin-top:80px">
 
-  <h2>🚀 Cloudflare Push Test</h2>
+  <h1>🚀 Cloudflare Push Test</h1>
 
-  <button onclick="subscribe()" style="padding:12px 20px; font-size:16px;">
+  <button id="enableBtn" style="padding:15px 30px;margin:10px;font-size:18px">
     Enable Notifications
   </button>
 
-  <br><br>
-
-  <button onclick="sendTest()" style="padding:12px 20px; font-size:16px;">
+  <button id="testBtn" style="padding:15px 30px;margin:10px;font-size:18px">
     Send Test Notification
   </button>
 
-  <script>
-    const WORKER_URL = "https://temporary029.workers.dev"; // 👈 PUT YOUR URL HERE
+<script>
+let registration = null;
 
-    // register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js");
-    }
+/* ======================
+   Register Service Worker
+====================== */
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(reg => {
+      registration = reg;
+      console.log("SW ready");
+    });
+}
 
-    let subscription = null;
+/* ======================
+   Enable Notifications
+====================== */
+document.getElementById("enableBtn").onclick = async () => {
 
-    // subscribe user
-    async function subscribe() {
-      const reg = await navigator.serviceWorker.ready;
+  if (!("Notification" in window)) {
+    alert("Not supported");
+    return;
+  }
 
-      subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: null
-      });
+  const permission = await Notification.requestPermission();
 
-      alert("✅ Notifications enabled!");
-    }
+  if (permission !== "granted") {
+    alert("Permission denied");
+    return;
+  }
 
-    // send push using worker
-    async function sendTest() {
-      if (!subscription) {
-        alert("Click Enable Notifications first");
-        return;
-      }
+  alert("✅ Notifications enabled!");
+};
 
-      await fetch(WORKER_URL, {
-        method: "POST",
-        body: JSON.stringify(subscription)
-      });
 
-      alert("📩 Push sent!");
-    }
-  </script>
+/* ======================
+   Send Local Test Push
+   (works even offline)
+====================== */
+document.getElementById("testBtn").onclick = async () => {
+
+  if (!registration) {
+    alert("Service worker not ready");
+    return;
+  }
+
+  registration.showNotification("🎉 Test Notification", {
+    body: "Background push working!",
+    icon: "/icon-192.png"
+  });
+};
+</script>
 
 </body>
 </html>
