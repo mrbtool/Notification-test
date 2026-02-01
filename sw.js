@@ -1,8 +1,13 @@
-self.addEventListener('push', event => {
-  const data = event.data.json();
+self.addEventListener("push", event => {
+  const data = {
+    title: "Hello 👋",
+    body: "Background notification working!"
+  };
 
-  self.registration.showNotification(data.title, {
-    body: data.body,
-    icon: '/icon.png'
-  });
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon.png"
+    })
+  );
 });
