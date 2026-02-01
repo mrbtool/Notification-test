@@ -2,77 +2,54 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Push Test</title>
 
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#000000" />
+  <link rel="manifest" href="manifest.json" />
 </head>
 
-<body style="font-family:sans-serif;text-align:center;margin-top:80px">
+<body style="text-align:center;font-family:sans-serif;margin-top:60px">
 
-  <h1>🚀 Cloudflare Push Test</h1>
+<h2>🚀 Cloudflare Push Test</h2>
 
-  <button id="enableBtn" style="padding:15px 30px;margin:10px;font-size:18px">
-    Enable Notifications
-  </button>
-
-  <button id="testBtn" style="padding:15px 30px;margin:10px;font-size:18px">
-    Send Test Notification
-  </button>
+<button onclick="enablePush()">Enable Notifications</button>
+<br><br>
+<button onclick="sendPush()">Send To All Devices</button>
 
 <script>
-let registration = null;
+const WORKER_URL = "https://YOUR-WORKER.workers.dev"; // change later
 
-/* ======================
-   Register Service Worker
-====================== */
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js")
-    .then(reg => {
-      registration = reg;
-      console.log("SW ready");
-    });
-}
+async function enablePush() {
+  if (!("serviceWorker" in navigator)) return alert("Not supported");
 
-/* ======================
-   Enable Notifications
-====================== */
-document.getElementById("enableBtn").onclick = async () => {
-
-  if (!("Notification" in window)) {
-    alert("Not supported");
-    return;
-  }
+  const reg = await navigator.serviceWorker.register("/sw.js");
 
   const permission = await Notification.requestPermission();
+  if (permission !== "granted") return alert("Permission denied");
 
-  if (permission !== "granted") {
-    alert("Permission denied");
-    return;
-  }
-
-  alert("✅ Notifications enabled!");
-};
-
-
-/* ======================
-   Send Local Test Push
-   (works even offline)
-====================== */
-document.getElementById("testBtn").onclick = async () => {
-
-  if (!registration) {
-    alert("Service worker not ready");
-    return;
-  }
-
-  registration.showNotification("🎉 Test Notification", {
-    body: "Background push working!",
-    icon: "/icon-192.png"
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array("YOUR_PUBLIC_VAPID_KEY")
   });
-};
+
+  await fetch(WORKER_URL + "/subscribe", {
+    method: "POST",
+    body: JSON.stringify(sub)
+  });
+
+  alert("Subscribed successfully ✅");
+}
+
+async function sendPush() {
+  await fetch(WORKER_URL + "/send", { method: "POST" });
+  alert("Sent to all devices 🚀");
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
 </script>
 
 </body>
