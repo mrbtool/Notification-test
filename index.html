@@ -1,31 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>PWA Push Test</title>
-</head>
-<body>
-  <h1>Push Ready ✅</h1>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Push Notification Test</title>
 
-  <button onclick="subscribe()">Enable Notifications</button>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+</head>
+
+<body style="font-family: sans-serif; text-align:center; padding-top:40px;">
+
+  <h2>🚀 Cloudflare Push Test</h2>
+
+  <button onclick="subscribe()" style="padding:12px 20px; font-size:16px;">
+    Enable Notifications
+  </button>
+
+  <br><br>
+
+  <button onclick="sendTest()" style="padding:12px 20px; font-size:16px;">
+    Send Test Notification
+  </button>
 
   <script>
-    navigator.serviceWorker.register('/sw.js');
+    const WORKER_URL = "https://temporary029.workers.dev"; // 👈 PUT YOUR URL HERE
 
+    // register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+
+    let subscription = null;
+
+    // subscribe user
     async function subscribe() {
       const reg = await navigator.serviceWorker.ready;
 
-      const sub = await reg.pushManager.subscribe({
+      subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: 'YOUR_PUBLIC_VAPID_KEY'
+        applicationServerKey: null
       });
 
-      await fetch('https://YOUR-WORKER.workers.dev', {
-        method: 'POST',
-        body: JSON.stringify(sub)
+      alert("✅ Notifications enabled!");
+    }
+
+    // send push using worker
+    async function sendTest() {
+      if (!subscription) {
+        alert("Click Enable Notifications first");
+        return;
+      }
+
+      await fetch(WORKER_URL, {
+        method: "POST",
+        body: JSON.stringify(subscription)
       });
 
-      alert("Subscribed!");
+      alert("📩 Push sent!");
     }
   </script>
+
 </body>
 </html>
