@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PWA Push Test</title>
+</head>
+<body>
+  <h1>Push Ready ✅</h1>
+
+  <button onclick="subscribe()">Enable Notifications</button>
+
+  <script>
+    navigator.serviceWorker.register('/sw.js');
+
+    async function subscribe() {
+      const reg = await navigator.serviceWorker.ready;
+
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: 'YOUR_PUBLIC_VAPID_KEY'
+      });
+
+      await fetch('https://YOUR-WORKER.workers.dev', {
+        method: 'POST',
+        body: JSON.stringify(sub)
+      });
+
+      alert("Subscribed!");
+    }
+  </script>
+</body>
+</html>
